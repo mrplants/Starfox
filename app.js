@@ -11,11 +11,12 @@ require.config({
 	"Matrix"	 : "lib/modules/Matrix",
 	"MatrixStack": "lib/modules/MatrixStack",
 	"Model"		 : "lib/modules/Model",
-	"ParticleEmitter" : "lib/modules/ParticleEmitter"
+	"ParticleEmitter" : "lib/modules/ParticleEmitter",
+	"Graphics3DContext": "lib/modules/Graphics3DContext"
 	}
 });
-require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
-function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   vertexSource, 				   fragmentSource) {
+require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
+function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   vertexSource, 				    fragmentSource) {
 	'use strict';
 
 	// Get the canvas element and set its height/width appropriately based on the pixel ratio
@@ -26,25 +27,10 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	// Get the webGL context
 	var gl = canvas.getContext('webgl');
 
-	// Enable depth test
-	gl.enable(gl.DEPTH_TEST);
-	// Set the clear color
-	gl.clearColor(0.0,0.0,0.0,1.0);
-
-	// Create and compile the shaders
-	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-	gl.shaderSource(vertexShader, vertexSource);
-	gl.compileShader(vertexShader);
-
-	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-	gl.shaderSource(fragmentShader, fragmentSource);
-	gl.compileShader(fragmentShader);
-
-	// Create and compile the rendering program
-	var program = gl.createProgram();
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
+	// Prepare the drawing context with this scene
+	var context = new Graphics3DContext(gl);
+	context.clearColor = {r:0.0, g:0.0, b:0.0, a:0.0};
+	context.setupProgram(vertexSource, fragmentSource, 'Starfox scene');
 
 	// Set up the animation framerate and callback
 	var animation = new Animation();
@@ -52,8 +38,13 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	animation.setCallback(reDraw);
 
 	// Data used for scene geometry
-	var perspectiveProjectionStack = new MatrixStack();
-	perspectiveProjectionStack.push(new Matrix());
+	// World projection used for positioning models in the scene
+	var worldProjectionStack = new MatrixStack();
+	worldProjectionStack.push((new Matrix()).rotate3D(-Math.PI/6, -Math.PI/6, 0));
+	worldProjectionStack.push((new Matrix()).translate(0,0,2));
+	// View projection used for transforming the scene into viewing coordinates
+	var viewProjectionMatrix = new Matrix();
+	viewProjectionMatrix.frustivize(-1, -3, 1, -1, 1, -1); // <-- SOMETHING WEIRD ABOUT THIS FUNCTION. TAKES ONLY NEGATIVE VALUES FOR THE FIRST TWO ARGUMENTS...
 
 	var modelLoadedCount = 0;
 	var numberModels = 1;
@@ -74,11 +65,9 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	// Load the data
 	function reDraw(time, frameNumber) {
 
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		// Load the rendering program
-		gl.useProgram(program);
-		arwing.draw(perspectiveProjectionStack, program);
+		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
+			arwing.draw(worldProjectionStack, program);
+		});
 
 	};
 
