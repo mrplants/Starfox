@@ -13,11 +13,11 @@ require.config({
 	"Model"		 : "lib/modules/Model",
 	"ParticleEmitter" : "lib/modules/ParticleEmitter",
 	"Graphics3DContext": "lib/modules/Graphics3DContext",
-	"MapParser"  : "lib/modules/Model"
+	"MapParser"  : "lib/modules/MapParser"
 	}
 });
-require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
-function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   vertexSource, 				    fragmentSource) {
+require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'MapParser', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
+function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   MapParser,   vertexSource, 				     fragmentSource) {
 	'use strict';
 
 	// Get the canvas element and set its height/width appropriately based on the pixel ratio
@@ -45,17 +45,42 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	worldProjectionStack.push((new Matrix()).translate(0,0,2));
 	// View projection used for transforming the scene into viewing coordinates
 	var viewProjectionMatrix = new Matrix();
-	viewProjectionMatrix.frustivize(-1, -3, 1, -1, 1, -1); // <-- SOMETHING WEIRD ABOUT THIS FUNCTION. TAKES ONLY NEGATIVE VALUES FOR THE FIRST TWO ARGUMENTS...
+	viewProjectionMatrix.frustivize(-1, -100, 1, -1, 1, -1); // <-- SOMETHING WEIRD ABOUT THIS FUNCTION. TAKES ONLY NEGATIVE VALUES FOR THE FIRST TWO ARGUMENTS...
 
 	var modelLoadedCount = 0;
 	var numberModels = 1;
 
-	var arwing = new Model(gl, 'arwing', modelLoaded);
+	var mapParser = new MapParser('level-1', mapLoaded);
+
+	var loadedModels = [];
+
+	var arwing;
+
+	function mapLoaded(mapParser) {
+		arwing = new Model(gl, 'arwing', modelLoaded);
+		mapParser.models.forEach(function(element){
+			if (loadedModels.indexOf(element.mesh) == -1) {
+				loadedModels.push(element.mesh);
+			}
+		});
+		numberModels += loadedModels.length;
+		loadedModels.forEach(function(element) {
+			new Model(gl, element, modelLoaded);
+		});
+	}
+
+
 
 	function modelLoaded(model) {
 		if (model.modelName == 'arwing') {
 			model.baseColor = [131/255.0, 137/255.0, 150/255.0, 1.0];
 			model.shininess = 50.0;
+		} else {
+			mapParser.models.forEach(function(element) {
+				if (element.mesh == model.modelName) {
+					element.mesh = model;
+				}
+			});
 		}
 		modelLoadedCount++;
 		if (modelLoadedCount == numberModels) {
@@ -68,7 +93,12 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 			arwing.draw(worldProjectionStack, program);
+			worldProjectionStack.pop();
+			worldProjectionStack.push((new Matrix()).translate(0,0.5,70)); // really far away, a little higher
 			arwing.draw(worldProjectionStack, program);
+			worldProjectionStack.pop();
+			worldProjectionStack.push((new Matrix()).translate(0,0,2));
+			// ^^ CLEARLY THE FRUSTUM DOES NOT WORK. THESE MODELS ARE THE SAME SIZE. ^^
 		});
 
 
