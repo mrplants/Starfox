@@ -67,7 +67,9 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 			arwing.draw(worldProjectionStack, program);
+			arwing.draw(worldProjectionStack, program);
 		});
+
 
 	};
 
