@@ -12,7 +12,8 @@ require.config({
 	"MatrixStack": "lib/modules/MatrixStack",
 	"Model"		 : "lib/modules/Model",
 	"ParticleEmitter" : "lib/modules/ParticleEmitter",
-	"Graphics3DContext": "lib/modules/Graphics3DContext"
+	"Graphics3DContext": "lib/modules/Graphics3DContext",
+	"MapParser"  : "lib/modules/Model"
 	}
 });
 require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
