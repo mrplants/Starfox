@@ -41,8 +41,6 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	// Data used for scene geometry
 	// World projection used for positioning models in the scene
 	var worldProjectionStack = new MatrixStack();
-	worldProjectionStack.push((new Matrix()).rotate3D(-Math.PI/6, -Math.PI/6, 0));
-	worldProjectionStack.push((new Matrix()).translate(0,0,2));
 	// View projection used for transforming the scene into viewing coordinates
 	var viewProjectionMatrix = new Matrix();
 	viewProjectionMatrix.frustivize(-1, -100, 1, -1, 1, -1); // <-- SOMETHING WEIRD ABOUT THIS FUNCTION. TAKES ONLY NEGATIVE VALUES FOR THE FIRST TWO ARGUMENTS...
@@ -92,13 +90,33 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	function reDraw(time, frameNumber) {
 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
+
+			// Draw the models in the scene
+			for (var index = 0; index < mapParser.models.length; index++) {
+				var meshModel = mapParser.models[index].mesh;
+				var location = mapParser.models[index].location;
+				var modelCategory = mapParser.models[index].keyword;
+				
+				// Do some setup based on the category of the model (collectibles, obstacles, enemies)
+				//
+				//
+				//
+
+				worldProjectionStack.push((new Matrix()).translate(location.x, location.y, location.z));
+				meshModel.draw(worldProjectionStack, program);
+				worldProjectionStack.pop();
+			};
+
+			worldProjectionStack.push((new Matrix()).rotate3D(-Math.PI/6, -Math.PI/6, 0));
+			worldProjectionStack.push((new Matrix()).translate(0,0,2));
+			// Testing the frustum projection
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
 			worldProjectionStack.push((new Matrix()).translate(0,0.5,70)); // really far away, a little higher
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
-			worldProjectionStack.push((new Matrix()).translate(0,0,2));
-			// ^^ CLEARLY THE FRUSTUM DOES NOT WORK. THESE MODELS ARE THE SAME SIZE. ^^
+			worldProjectionStack.pop();
+			// PROBLEM: ^^ CLEARLY THE FRUSTUM DOES NOT WORK. THESE MODELS ARE THE SAME SIZE. ^^
 		});
 
 
