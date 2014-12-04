@@ -43,7 +43,7 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	var worldProjectionStack = new MatrixStack();
 	// View projection used for transforming the scene into viewing coordinates
 	var viewProjectionMatrix = new Matrix();
-	viewProjectionMatrix.frustivize(-1, -100, 1, -1, 1, -1); // <-- SOMETHING WEIRD ABOUT THIS FUNCTION. TAKES ONLY NEGATIVE VALUES FOR THE FIRST TWO ARGUMENTS...
+	viewProjectionMatrix.perspectivize(Math.PI / 3, 1, 1, 20);
 
 	var modelLoadedCount = 0;
 	var numberModels = 1;
@@ -57,6 +57,17 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	function mapLoaded(mapParser) {
 		arwing = new Model(gl, 'arwing', modelLoaded);
 		mapParser.models.forEach(function(element){
+			if (element.mesh == 'asteroid') {
+
+				var asteroidNames = ['asteroid1', 'asteroid2', 'asteroid3', 'asteroid4', 'asteroid5'];
+				element.mesh = asteroidNames[parseInt(Math.random() * 5)];
+
+				element.rotationFactor = {
+					x: Math.random() * 200 + 200,
+					y: Math.random() * 200 + 200,
+					z: Math.random() * 200 + 200
+				};
+			}
 			if (loadedModels.indexOf(element.mesh) == -1) {
 				loadedModels.push(element.mesh);
 			}
@@ -70,8 +81,17 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 
 
 	function modelLoaded(model) {
+		if (model.modelName.indexOf('asteroid') !== -1) {
+			model.baseColor = [139/255.0, 69/255.0, 19/255.0, 1.0];
+			model.shininess = 0.0;
+		}
+		if (model.modelName == 'coin') {
+			model.baseColor = [255/255.0, 215/255.0, 0.0, 1.0];
+			model.shininess = 100.0;
+			model.modelView.scale(0.125, 0.125, 0.125);
+		}
 		if (model.modelName == 'arwing') {
-			model.baseColor = [131/255.0, 137/255.0, 150/255.0, 1.0];
+			model.baseColor = [35/255.0, 107/255.0, 142/255.0, 1.0];
 			model.shininess = 50.0;
 		} else {
 			mapParser.models.forEach(function(element) {
@@ -86,37 +106,53 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 		}
 	}
 
-	// Load the data
+
 	function reDraw(time, frameNumber) {
+	// Remember that all models are drawn in the negative z-space.
+	// This ensures a right-handed coordinatesystem with sensibly oriented x and y axes.
 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 
+			var distanceTraveled = time / 300;
+
+			// Move the world forward a little so that the camera can capture everything and the ship is at the center of the entrance to the map.
+			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -20 + distanceTraveled));
+
 			// Draw the models in the scene
 			for (var index = 0; index < mapParser.models.length; index++) {
-				var meshModel = mapParser.models[index].mesh;
-				var location = mapParser.models[index].location;
-				var modelCategory = mapParser.models[index].keyword;
-				
-				// Do some setup based on the category of the model (collectibles, obstacles, enemies)
-				//
-				//
-				//
+				var model = mapParser.models[index]
 
-				worldProjectionStack.push((new Matrix()).translate(location.x, location.y, location.z));
+				var meshModel = model.mesh;
+				var location = model.location;
+				var modelCategory = model.keyword;
+
+				// Push the location onto the world projection stack
+				worldProjectionStack.push((new Matrix()).translate(location.x, location.y, -location.z));
+				
+				var modelTransform = new Matrix(4);
+
+				if (meshModel.modelName == 'coin') {
+					modelTransform.rotateX(Math.PI / 2);
+					modelTransform.rotateZ(time / 200, 3);
+				}
+				if (meshModel.modelName.indexOf('asteroid') !== -1) {
+					modelTransform.rotateX(time / model.rotationFactor.x);
+					modelTransform.rotateY(time / model.rotationFactor.y);
+					modelTransform.rotateZ(time / model.rotationFactor.z, 3);
+				}
+
+				worldProjectionStack.push(modelTransform);
+
 				meshModel.draw(worldProjectionStack, program);
 				worldProjectionStack.pop();
+				worldProjectionStack.pop();
 			};
+			worldProjectionStack.pop();
 
-			worldProjectionStack.push((new Matrix()).rotate3D(-Math.PI/6, -Math.PI/6, 0));
-			worldProjectionStack.push((new Matrix()).translate(0,0,2));
-			// Testing the frustum projection
+			// draw the ship
+			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -3));
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
-			worldProjectionStack.push((new Matrix()).translate(0,0.5,70)); // really far away, a little higher
-			arwing.draw(worldProjectionStack, program);
-			worldProjectionStack.pop();
-			worldProjectionStack.pop();
-			// PROBLEM: ^^ CLEARLY THE FRUSTUM DOES NOT WORK. THESE MODELS ARE THE SAME SIZE. ^^
 		});
 
 
