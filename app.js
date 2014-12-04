@@ -7,7 +7,7 @@ require.config({
 	"Timer"		 : "lib/modules/Timer",
 	"Animation"  : "lib/modules/Animation",
 	"text"       : "lib/require/text",
-	"Gestures"	 : "lib/modules/Gestures",
+	"DOMInteraction" : "lib/modules/DOMInteraction",
 	"Matrix"	 : "lib/modules/Matrix",
 	"MatrixStack": "lib/modules/MatrixStack",
 	"Model"		 : "lib/modules/Model",
@@ -16,14 +16,17 @@ require.config({
 	"MapParser"  : "lib/modules/MapParser"
 	}
 });
-require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'MapParser', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
-function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   MapParser,   vertexSource, 				     fragmentSource) {
+require(['jquery', 'Animation', 'ObjParser', 'DOMInteraction', 'Matrix', 'MatrixStack', 'Model', 'ParticleEmitter', 'Graphics3DContext', 'MapParser', 'text!lib/shaders/vertex.glsl', 'text!lib/shaders/fragment.glsl'],
+function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   MapParser,   vertexSource, 				     fragmentSource) {
 	'use strict';
 
 	// Get the canvas element and set its height/width appropriately based on the pixel ratio
 	var canvas = $('canvas')[0];
-	canvas.width = 500 * devicePixelRatio;
-	canvas.height = 500 * devicePixelRatio;
+	canvas.width = $(window).width() * devicePixelRatio;
+	canvas.style.width = $(window).width() + 'px';
+	canvas.height = $(window).height() * devicePixelRatio;
+	canvas.style.height = $(window).height() + 'px';
+	var aspectRatio = canvas.width / canvas.height;
 
 	// Get the webGL context
 	var gl = canvas.getContext('webgl');
@@ -43,7 +46,7 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 	var worldProjectionStack = new MatrixStack();
 	// View projection used for transforming the scene into viewing coordinates
 	var viewProjectionMatrix = new Matrix();
-	viewProjectionMatrix.perspectivize(Math.PI / 3, 1, 1, 20);
+	viewProjectionMatrix.perspectivize(Math.PI / 3, aspectRatio, 1, 20);
 
 	var modelLoadedCount = 0;
 	var numberModels = 1;
@@ -93,6 +96,7 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 		if (model.modelName == 'arwing') {
 			model.baseColor = [35/255.0, 107/255.0, 142/255.0, 1.0];
 			model.shininess = 50.0;
+			model.modelView.scale(1.0, 1.0, -1.0);
 		} else {
 			mapParser.models.forEach(function(element) {
 				if (element.mesh == model.modelName) {
@@ -114,6 +118,12 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 
 			var distanceTraveled = time / 300;
+
+			// Angle the world a little up so that the user isn't staring at the back of the ship
+			// Then move it down a little
+			worldProjectionStack.push((new Matrix()).translate(0.0, -1.0, 0.0));
+			worldProjectionStack.push((new Matrix()).rotateX(Math.PI / 8));
+
 
 			// Move the world forward a little so that the camera can capture everything and the ship is at the center of the entrance to the map.
 			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -20 + distanceTraveled));
@@ -150,8 +160,10 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 			worldProjectionStack.pop();
 
 			// draw the ship
-			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -3));
+			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -4));
 			arwing.draw(worldProjectionStack, program);
+			worldProjectionStack.pop();
+			worldProjectionStack.pop();
 			worldProjectionStack.pop();
 		});
 
