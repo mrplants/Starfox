@@ -60,6 +60,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	function mapLoaded(mapParser) {
 		arwing = new Model(gl, 'arwing', modelLoaded);
 		mapParser.models.forEach(function(element){
+			element.shouldDraw = true;
 			if (element.mesh == 'asteroid') {
 
 				var asteroidNames = ['asteroid1', 'asteroid2', 'asteroid3', 'asteroid4', 'asteroid5'];
@@ -82,21 +83,28 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	}
 
 
+	var coinRadius = 0.125;
+	var asteroidRadius = 1.0;
+	var shipRadius = 1.0;
 
 	function modelLoaded(model) {
 		if (model.modelName.indexOf('asteroid') !== -1) {
-			model.baseColor = [139/255.0, 69/255.0, 19/255.0, 1.0];
+			model.baseColor = [92/255.0, 64/255.0, 51/255.0, 1.0];
 			model.shininess = 0.0;
+			model.modelView.scale(asteroidRadius, asteroidRadius, asteroidRadius);
+			model.radius = asteroidRadius;
 		}
 		if (model.modelName == 'coin') {
 			model.baseColor = [255/255.0, 215/255.0, 0.0, 1.0];
 			model.shininess = 100.0;
-			model.modelView.scale(0.125, 0.125, 0.125);
+			model.modelView.scale(coinRadius, coinRadius, coinRadius);
+			model.radius = coinRadius;
 		}
 		if (model.modelName == 'arwing') {
 			model.baseColor = [35/255.0, 107/255.0, 142/255.0, 1.0];
 			model.shininess = 50.0;
-			model.modelView.scale(1.0, 1.0, -1.0);
+			model.modelView.scale(shipRadius, shipRadius, -shipRadius);
+			model.radius = shipRadius;
 		} else {
 			mapParser.models.forEach(function(element) {
 				if (element.mesh == model.modelName) {
@@ -110,31 +118,68 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 		}
 	}
 
+	var shipOffset = -4;
+	var coinSpinFactor = 200; // higher is slower
+	var worldTiltAngle = Math.PI / 8;
+	var worldOffset = -1.0;
+	var travelSpeedFactor = 300; // higher is slower
+	var moving = true;
+	var numberCoinsCollected = 0;
+	var distanceTraveled = 0;
 
 	function reDraw(time, frameNumber) {
 	// Remember that all models are drawn in the negative z-space.
 	// This ensures a right-handed coordinatesystem with sensibly oriented x and y axes.
 
+		// Detect collisions
+		// First iterate through all the scene models
+		mapParser.models.forEach(function(element) {
+			var category = element.keyword;
+			var modelName = element.mesh.modelName;
+			var distance = Math.sqrt(Math.pow(element.location.x, 2) + Math.pow(element.location.y, 2) + Math.pow(-element.location.z - shipOffset - 20 + distanceTraveled, 2));
+
+			if (distance < (shipRadius + element.mesh.radius)/2 && element.shouldDraw) {
+				switch (category) {
+					case 'collectibles':
+						numberCoinsCollected++;
+						element.shouldDraw = false;
+						break;
+					case 'enemies':
+						moving = false;
+						break;
+					case 'obstacles':
+						moving = false;
+						break;
+				}
+			}
+		});
+
+
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 
-			var distanceTraveled = time / 300;
+			if (moving) {
+				distanceTraveled = frameNumber * 60 / travelSpeedFactor;
+			}
 
 			// Angle the world a little up so that the user isn't staring at the back of the ship
 			// Then move it down a little
-			worldProjectionStack.push((new Matrix()).translate(0.0, -1.0, 0.0));
-			worldProjectionStack.push((new Matrix()).rotateX(Math.PI / 8));
+			worldProjectionStack.push((new Matrix()).translate(0.0, worldOffset, 0.0));
+			worldProjectionStack.push((new Matrix()).rotateX(worldTiltAngle));
 
 
-			// Move the world forward a little so that the camera can capture everything and the ship is at the center of the entrance to the map.
+			// Move the world forward a little so that the camera can capture everything
 			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -20 + distanceTraveled));
 
 			// Draw the models in the scene
 			for (var index = 0; index < mapParser.models.length; index++) {
-				var model = mapParser.models[index]
+				var model = mapParser.models[index];
+
+				if (!model.shouldDraw) {
+					continue;
+				}
 
 				var meshModel = model.mesh;
 				var location = model.location;
-				var modelCategory = model.keyword;
 
 				// Push the location onto the world projection stack
 				worldProjectionStack.push((new Matrix()).translate(location.x, location.y, -location.z));
@@ -143,7 +188,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 
 				if (meshModel.modelName == 'coin') {
 					modelTransform.rotateX(Math.PI / 2);
-					modelTransform.rotateZ(time / 200, 3);
+					modelTransform.rotateZ(time / coinSpinFactor, 3);
 				}
 				if (meshModel.modelName.indexOf('asteroid') !== -1) {
 					modelTransform.rotateX(time / model.rotationFactor.x);
@@ -160,14 +205,11 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 			worldProjectionStack.pop();
 
 			// draw the ship
-			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, -4));
+			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, shipOffset));
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
 		});
-
-
 	};
-
 }); 
