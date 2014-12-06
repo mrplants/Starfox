@@ -129,6 +129,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var moving = true;
 	var numberCoinsCollected = 0;
 	var distanceTraveled = 0;
+	var shipLocation = {x:0,y:0};
 
 	function reDraw(time, frameNumber) {
 	// Remember that all models are drawn in the negative z-space.
@@ -143,7 +144,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 		mapParser.models.forEach(function(element) {
 			var category = element.keyword;
 			var modelName = element.mesh.modelName;
-			var distance = Math.sqrt(Math.pow(element.location.x, 2) + Math.pow(element.location.y, 2) + Math.pow(-element.location.z - shipOffset - 20 + distanceTraveled, 2));
+			var distance = Math.sqrt(Math.pow(element.location.x - shipLocation.x, 2) + Math.pow(element.location.y - shipLocation.y, 2) + Math.pow(-element.location.z - shipOffset - 20 + distanceTraveled, 2));
 
 			if (distance < (shipRadius + element.mesh.radius)/2 && element.shouldDraw) {
 				switch (category) {
@@ -208,11 +209,11 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 				meshModel.draw(worldProjectionStack, program);
 				worldProjectionStack.pop();
 				worldProjectionStack.pop();
-			};
+			}
 			worldProjectionStack.pop();
 
 			// draw the ship
-			worldProjectionStack.push((new Matrix()).translate(domInteraction.curXPos, domInteraction.curYPos, shipOffset));
+			worldProjectionStack.push((new Matrix()).translate(shipLocation.x, shipLocation.y, shipOffset));
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
