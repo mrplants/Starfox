@@ -21,7 +21,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	'use strict';
 
 	// Recognize mouse movements
-	var gestureRecognizer = new Gestures();
+	var domInteraction = new DOMInteraction();
 
 	// Get the canvas element and set its height/width appropriately based on the pixel ratio
 	var canvas = $('canvas')[0];
@@ -212,7 +212,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 			worldProjectionStack.pop();
 
 			// draw the ship
-			worldProjectionStack.push((new Matrix()).translate(0.0, 0.0, shipOffset));
+			worldProjectionStack.push((new Matrix()).translate(domInteraction.curXPos, domInteraction.curYPos, shipOffset));
 			arwing.draw(worldProjectionStack, program);
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
