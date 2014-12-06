@@ -131,6 +131,13 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var distanceTraveled = 0;
 	var shipLocation = {x:0,y:0};
 
+	function convertScreenToMap(location){
+		var locationConverted = {};
+		locationConverted.x = location.x * mapParser.width / $(window).width() - (0.5)*mapParser.width;
+		locationConverted.y = -location.y * mapParser.height / $(window).height() + (0.5)*mapParser.height;
+		return locationConverted;
+	}
+
 	function reDraw(time, frameNumber) {
 	// Remember that all models are drawn in the negative z-space.
 	// This ensures a right-handed coordinatesystem with sensibly oriented x and y axes.
@@ -138,6 +145,9 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 
 		//var translate = new Matrix(4);
 		//translate.translate(gestureRecognizer.curXPos, gestureRecognizer.curYPos, 0);
+
+
+		shipLocation = convertScreenToMap({x:domInteraction.curXPos, y:domInteraction.curYPos});
 
 		// Detect collisions
 		// First iterate through all the scene models
