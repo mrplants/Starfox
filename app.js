@@ -20,6 +20,9 @@ require(['jquery', 'Animation', 'ObjParser', 'Gestures', 'Matrix', 'MatrixStack'
 function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   vertexSource, 				    fragmentSource) {
 	'use strict';
 
+	// Recognize mouse movements
+	var gestureRecognizer = new Gestures();
+
 	// Get the canvas element and set its height/width appropriately based on the pixel ratio
 	var canvas = $('canvas')[0];
 	canvas.width = 500 * devicePixelRatio;
@@ -65,6 +68,9 @@ function( jquery, 	Animation, 	 ObjParser,   Gestures,   Matrix,   MatrixStack, 
 
 	// Load the data
 	function reDraw(time, frameNumber) {
+
+		//var translate = new Matrix(4);
+		//translate.translate(gestureRecognizer.curXPos, gestureRecognizer.curYPos, 0);
 
 		context.draw('Starfox scene', viewProjectionMatrix, function(program) {
 			arwing.draw(worldProjectionStack, program);
