@@ -49,7 +49,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var worldProjectionStack = new MatrixStack();
 	// View projection used for transforming the scene into viewing coordinates
 	var viewProjectionMatrix = new Matrix();
-	viewProjectionMatrix.perspectivize(Math.PI / 3, aspectRatio, 1, 20);
+	viewProjectionMatrix.perspectivize(Math.PI / 3, aspectRatio, 1, 100);
 
 	var modelLoadedCount = 0;
 	var numberModels = 1;
