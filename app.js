@@ -20,6 +20,8 @@ require(['jquery', 'Animation', 'ObjParser', 'DOMInteraction', 'Matrix', 'Matrix
 function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixStack,   Model,   ParticleEmitter,   Graphics3DContext,   MapParser,   vertexSource, 				     fragmentSource) {
 	'use strict';
 
+	$('#game-over').hide();
+
 	// Recognize mouse movements
 	var domInteraction = new DOMInteraction();
 
@@ -54,7 +56,13 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var modelLoadedCount = 0;
 	var numberModels = 1;
 
-	var mapParser = new MapParser('level-2', mapLoaded);
+	// get the hash location and use that for the map.
+	var mapName = location.hash.slice(1);
+	if (mapName == '') {
+		mapName = 'level-1';
+	}
+
+	var mapParser = new MapParser(mapName, mapLoaded);
 
 	var loadedModels = [];
 
@@ -147,7 +155,9 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 		//translate.translate(gestureRecognizer.curXPos, gestureRecognizer.curYPos, 0);
 
 
-		shipLocation = convertScreenToMap({x:domInteraction.curXPos, y:domInteraction.curYPos});
+		if (moving) {
+			shipLocation = convertScreenToMap({x:domInteraction.curXPos, y:domInteraction.curYPos});			
+		}
 
 		// Detect collisions
 		// First iterate through all the scene models
@@ -160,13 +170,16 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 				switch (category) {
 					case 'collectibles':
 						numberCoinsCollected++;
+						$('#score').html(String(numberCoinsCollected));
 						element.shouldDraw = false;
 						break;
 					case 'enemies':
 						moving = false;
+						$('#game-over').show();
 						break;
 					case 'obstacles':
 						moving = false;
+						$('#game-over').show();
 						break;
 				}
 			}

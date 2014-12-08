@@ -5,4 +5,28 @@ canvas {
 	bottom: 0;
 	width: 100%;
 	height: 100%;
+	position: absolute;
+	z-index: -1;
+}
+
+p {
+	text-align: center;
+	font-family: sans-serif;
+	color: white;
+	z-index: 1;
+}
+
+#game-over {
+	margin-top: 10em;
+}
+
+#score {
+}
+
+body {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	width: 100%;
+	height:100%;
 }
