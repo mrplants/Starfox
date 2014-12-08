@@ -56,7 +56,13 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var modelLoadedCount = 0;
 	var numberModels = 1;
 
-	var mapParser = new MapParser('level-2', mapLoaded);
+	// get the hash location and use that for the map.
+	var mapName = location.hash.slice(1);
+	if (mapName == '') {
+		mapName = 'level-1';
+	}
+
+	var mapParser = new MapParser(mapName, mapLoaded);
 
 	var loadedModels = [];
 
