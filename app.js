@@ -56,7 +56,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var modelLoadedCount = 0;
 	var numberModels = 1;
 
-	var mapParser = new MapParser('level-1', mapLoaded);
+	var mapParser = new MapParser('level-2', mapLoaded);
 
 	var loadedModels = [];
 
@@ -126,7 +126,7 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 	var shipOffset = -4;
 	var coinSpinFactor = 200; // higher is slower
 	var worldTiltAngle = Math.PI / 8;
-	var worldOffset = -1.0;
+	var worldOffset = -1.0; //vertical offset
 	var travelSpeedFactor = 300; // higher is slower
 	var moving = true;
 	var numberCoinsCollected = 0;
@@ -230,8 +230,11 @@ function( jquery, 	Animation, 	 ObjParser,   DOMInteraction,   Matrix,   MatrixS
 			worldProjectionStack.pop();
 
 			// draw the ship
+			
 			worldProjectionStack.push((new Matrix()).translate(shipLocation.x, shipLocation.y, shipOffset));
+			//worldProjectionStack.push((new Matrix()).rotateZ(domInteraction.mouseRotation.x, 3));//
 			arwing.draw(worldProjectionStack, program);
+			//worldProjectionStack.pop();//
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
 			worldProjectionStack.pop();
